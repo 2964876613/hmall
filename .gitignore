@@ -2,4 +2,6 @@
 /hm-common/target/
 /hm-service/target/
 /item-service/target/
-/logs/
+logs/
+*.log
+*.gz
