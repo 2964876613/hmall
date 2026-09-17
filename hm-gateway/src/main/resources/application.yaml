@@ -28,4 +28,6 @@ spring:
           uri: lb://cart-service
           predicates:
             - Path=/carts/**
+      default-filters:
+        - AddRequestHeader=truth,anyone long-press like button will be rich
 
