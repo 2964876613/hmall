@@ -30,4 +30,15 @@ spring:
             - Path=/carts/**
       default-filters:
         - AddRequestHeader=truth,anyone long-press like button will be rich
-
+hm:
+  jwt:
+    location: classpath:hmall.jks
+    alias: hmall
+    password: hmall123
+    tokenTTL: 30m
+  auth:
+    excludePaths:
+      - /search/**
+      - /users/login
+      - /items/**
+      - /hi
