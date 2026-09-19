@@ -28,8 +28,8 @@ spring:
           uri: lb://cart-service
           predicates:
             - Path=/carts/**
-      default-filters:
-        - AddRequestHeader=truth,anyone long-press like button will be rich
+#      default-filters:
+#        - AddRequestHeader=truth,anyone long-press like button will be rich
 hm:
   jwt:
     location: classpath:hmall.jks

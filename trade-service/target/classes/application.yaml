@@ -2,7 +2,7 @@ server:
   port: 8085
 spring:
   application:
-    name: user-service #微服务名称
+    name: trade-service #微服务名称
   profiles:
     active: dev
   datasource:
