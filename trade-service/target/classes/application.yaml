@@ -9,3 +9,10 @@ hm:
 feign:
   okhttp:
     enabled: true # 开启OKHttp功能
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    virtual-host: /hmall
+    username: hmall
+    password: 123
