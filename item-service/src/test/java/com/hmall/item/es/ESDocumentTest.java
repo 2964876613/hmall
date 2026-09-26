@@ -6,7 +6,11 @@ import com.hmall.item.domain.po.Item;
 import com.hmall.item.domain.po.ItemDoc;
 import com.hmall.item.service.IItemService;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -38,6 +42,31 @@ public class ESDocumentTest {
         request.source(JSONUtil.toJsonStr(itemDoc), XContentType.JSON);
         // 3.发送请求
         restHighLevelClient.index(request, RequestOptions.DEFAULT);
+    }
+
+    @Test
+    public void testGetDoc() throws IOException {
+        GetRequest request = new GetRequest("items", "317578");
+        GetResponse response = restHighLevelClient.get(request, RequestOptions.DEFAULT);
+        String source = response.getSourceAsString();
+        ItemDoc doc = JSONUtil.toBean(source, ItemDoc.class);
+        System.out.println("doc = " + doc);
+
+    }
+
+    @Test
+    public void testDeleteDoc() throws IOException {
+        DeleteRequest request = new DeleteRequest("items", "317578");
+        restHighLevelClient.delete(request, RequestOptions.DEFAULT);
+    }
+
+    @Test
+    public void testUpdateDoc() throws IOException {
+        UpdateRequest request = new UpdateRequest("items", "317578");
+        request.doc(
+                "price",9999
+        );
+        restHighLevelClient.update(request, RequestOptions.DEFAULT);
     }
 
     @BeforeEach
