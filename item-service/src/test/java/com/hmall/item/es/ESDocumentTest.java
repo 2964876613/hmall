@@ -1,11 +1,15 @@
 package com.hmall.item.es;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmall.common.utils.BeanUtils;
 import com.hmall.item.domain.po.Item;
 import com.hmall.item.domain.po.ItemDoc;
 import com.hmall.item.service.IItemService;
+import com.hmall.item.service.impl.ItemServiceImpl;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -22,12 +26,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
+import java.util.List;
+
 @SpringBootTest(properties = "spring.profiles.active=local")
 public class ESDocumentTest {
 
     private RestHighLevelClient restHighLevelClient;
     @Autowired
     private IItemService iItemService;
+    @Autowired
+    private ItemServiceImpl itemServiceImpl;
 
     @Test
     public void testIndexDoc() throws IOException {
@@ -67,6 +75,33 @@ public class ESDocumentTest {
                 "price",9999
         );
         restHighLevelClient.update(request, RequestOptions.DEFAULT);
+    }
+
+    @Test
+    public void testBulkDoc() throws IOException {
+        int pageNo = 1, pageSize=500;
+        while (true) {
+            // 准备文档数据
+            Page<Item> page = itemServiceImpl.lambdaQuery()
+                    .eq(Item::getStatus, 1)
+                    .page(new Page<>(pageNo, pageSize));
+            List<Item> records = page.getRecords();
+            if(records == null || records.isEmpty()) {
+                return;
+            }
+            // 准备Request
+            BulkRequest request = new BulkRequest();
+            // 准备请求参数
+            for (Item record : records) {
+                request.add(new IndexRequest("items")
+                        .id(record.getId().toString())
+                        .source(JSONUtil.toJsonStr(BeanUtil.copyProperties(record, ItemDoc.class)), XContentType.JSON));
+            }
+            // 发送请求
+            restHighLevelClient.bulk(request, RequestOptions.DEFAULT);
+            // 翻页
+            pageNo++;
+        }
     }
 
     @BeforeEach
