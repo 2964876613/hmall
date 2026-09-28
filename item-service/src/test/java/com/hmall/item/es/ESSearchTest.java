@@ -11,12 +11,15 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Map;
 
 /*@SpringBootTest(properties = "spring.profiles.active=local")*/
 public class ESSearchTest {
@@ -62,6 +65,15 @@ public class ESSearchTest {
         parseResponse(response);
     }
 
+    @Test
+    public void testHighlight() throws IOException {
+        SearchRequest request = new SearchRequest("items");
+        request.source().query(QueryBuilders.matchQuery("name", "脱脂牛奶"));
+        request.source().highlighter(SearchSourceBuilder.highlight().field("name"));
+        SearchResponse response = restHighLevelClient.search(request, RequestOptions.DEFAULT);
+        parseResponse(response);
+    }
+
     private static void parseResponse(SearchResponse response) {
         SearchHits searchHits = response.getHits();
         // 4.1.总条数
@@ -74,6 +86,15 @@ public class ESSearchTest {
             String source = hit.getSourceAsString();
             // 4.2.2转为ItemDoc
             ItemDoc doc = JSONUtil.toBean(source, ItemDoc.class);
+            // 4.3.处理高量结果
+            Map<String, HighlightField> hfs = hit.getHighlightFields();
+            if(hfs != null && !hfs.isEmpty()) {
+                // 4.3.1.根据高亮字段名获取高亮结果
+                HighlightField hf = hfs.get("name");
+                // 4.3.2.根据高亮结果，覆盖非高亮结果
+                String hfName = hf.getFragments()[0].toString();
+                doc.setName(hfName);
+            }
             System.out.println("doc = " + doc);
         }
     }
