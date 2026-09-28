@@ -3,6 +3,7 @@ package com.hmall.item.es;
 import cn.hutool.json.JSONUtil;
 import com.hmall.item.domain.po.ItemDoc;
 import org.apache.http.HttpHost;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -11,6 +12,8 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
@@ -19,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /*@SpringBootTest(properties = "spring.profiles.active=local")*/
@@ -72,6 +76,33 @@ public class ESSearchTest {
         request.source().highlighter(SearchSourceBuilder.highlight().field("name"));
         SearchResponse response = restHighLevelClient.search(request, RequestOptions.DEFAULT);
         parseResponse(response);
+    }
+
+    @Test
+    public void testAggregation() throws IOException {
+        SearchRequest request = new SearchRequest("items");
+        request.source().size(0);
+        String brandAggName = "brandAgg";
+        request.source().aggregation(
+                AggregationBuilders
+                        .terms(brandAggName)
+                        .field("brand")
+                        .size(10));
+        SearchResponse response = restHighLevelClient.search(request, RequestOptions.DEFAULT);
+        // 解析结果
+        Aggregations aggregations = response.getAggregations();
+        // 根据聚合名称获取对应的聚合
+        Terms brandTerms = aggregations.get(brandAggName);
+        // 获取buckets
+        List<? extends Terms.Bucket> buckets = brandTerms.getBuckets();
+        // 遍历获取每一个bucket
+        for (Terms.Bucket bucket : buckets) {
+            System.out.println("brand = " + bucket.getKeyAsString());
+            System.out.println("count = " + bucket.getDocCount());
+        }
+
+
+
     }
 
     private static void parseResponse(SearchResponse response) {
